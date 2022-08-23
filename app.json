@@ -18,7 +18,7 @@
       "url": "https://github.com/jontewks/puppeteer-heroku-buildpack.git"
     },
     {
-      "url": "https://github.com/todokku/heroku-buildpack-tor-proxy.git"
+      "url": "https://github.com/tor-actions/heroku-buildpack-tor.git"
     }
   ]
 }
