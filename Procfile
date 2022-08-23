@@ -1,1 +1,1 @@
-web: ./tor/bin/run_tor &
+web: npm start --production
