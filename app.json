@@ -1,0 +1,24 @@
+{
+  "name": "Novel server",
+  "description": "Novel reading server",
+  "repository": "https://github.com/twoteatome/SfPupper",
+  "keywords": ["nodejs", "heroku"],
+  "success_url": "/",
+  "env": {
+    "MAX_CHAPTER": {
+      "description": "Maximum chapter reading",
+      "value": "3"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    },
+    {
+      "url": "https://github.com/jontewks/puppeteer-heroku-buildpack.git"
+    },
+    {
+      "url": "https://github.com/iamashks/heroku-buildpack-tor-proxy.git"
+    }
+  ]
+}
