@@ -26,7 +26,7 @@ const getRandomStr = function (length) {
 }
 
 app.get('/', (req, res) => {
-    res.send('OK 1: ' + maxChapter + ', ' + processLst.size);
+    res.send('OK 2: ' + maxChapter + ', ' + processLst.size + ', ' + waitTimeout);
 });
 
 app.get('/view', async (req, res) => {
