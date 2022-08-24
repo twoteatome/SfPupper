@@ -331,7 +331,7 @@ app.get('/link', async (req, res) => {
     }
     else
     {
-        let resAll = "<div style='transform: scale(2);'>";
+        let resAll = "<div style='font-size: 2em;'>";
         for (let i = 0; i < viewer.length; i++)
         {
             const tenchap = viewer.length - i;
@@ -339,7 +339,7 @@ app.get('/link', async (req, res) => {
             resAll = resAll + "<a class='chap-read' href='image?" + params + "' target='_blank'>Chap " + tenchap + "</a><br>";
         }
 
-        resAll = resAll + "<input type='text' value='" + waittime + "' oninput='document.querySelectorAll(\"a.chap-read\").forEach(el => el.href = el.href.replace(/wait=[0-9]+/g,\"wait=\" + this.value));'><br></div>";
+        resAll = resAll + "<br><br><input type='text' style='width: 100%; font-size: 2em;' value='" + waittime + "' oninput='document.querySelectorAll(\"a.chap-read\").forEach(el => el.href = el.href.replace(/wait=[0-9]*/g,\"wait=\" + this.value));'><br></div>";
         res.set('Content-Type', 'text/html');
         res.send(Buffer.from(resAll));
     }
