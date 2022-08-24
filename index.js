@@ -275,12 +275,7 @@ app.get('/image', async (req, res) => {
         waitUntil: 'load'
     });
 
-    if (url.includes("yurineko.net/read/"))
-    {
-        console.log("Yurineko read");
-        await page.waitForSelector('#comment');
-    }
-    else if (req.query.wait && parseInt(req.query.wait) > 0)
+    if (req.query.wait && parseInt(req.query.wait) > 0)
     {
         await page.waitForTimeout(parseInt(req.query.wait));
     }
@@ -336,14 +331,15 @@ app.get('/link', async (req, res) => {
     }
     else
     {
-        let resAll = "";
+        let resAll = "<div style='transform: scale(2);'>";
         for (let i = 0; i < viewer.length; i++)
         {
             const tenchap = viewer.length - i;
             let params = "url=" + viewer[i] + "&proxy=" + proxytxt + "&wait=" + waittime;
-            resAll = resAll + "<a href='image?" + params + "' target='_blank'>Chap " + tenchap + "</a><br>";
+            resAll = resAll + "<a class='chap-read' href='image?" + params + "' target='_blank'>Chap " + tenchap + "</a><br>";
         }
 
+        resAll = resAll + "<input type='text' value='" + waittime + "' oninput='document.querySelectorAll(\"a.chap-read\").forEach(el => el.href = el.href.replace(/wait=[0-9]+/g,\"wait=\" + this.value));'><br></div>";
         res.set('Content-Type', 'text/html');
         res.send(Buffer.from(resAll));
     }
