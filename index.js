@@ -268,6 +268,12 @@ app.get('/image', async (req, res) => {
 	await page.goto(url, {
         waitUntil: 'load'
     });
+    
+    if (req.query.wait)
+    {
+        await page.waitForSelector(req.query.wait);
+    }
+
     await page.screenshot({
         path: 'static/screenshot.jpg',
         fullPage: true
@@ -304,6 +310,7 @@ app.get('/yuri', async (req, res) => {
 	await page.goto(url, {
         waitUntil: 'networkidle2'
     });
+    await page.waitForSelector('a.link-chapter');
 
     const viewer = await page.$$eval('a.link-chapter', anchors => [].map.call(anchors, a => a.href));
 
