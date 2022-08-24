@@ -8,6 +8,10 @@
     "MAX_CHAPTER": {
       "description": "Maximum chapter reading",
       "value": "3"
+    },
+    "WAIT_TIME": {
+      "description": "Wait timeout",
+      "value": "5000"
     }
   },
   "buildpacks": [
