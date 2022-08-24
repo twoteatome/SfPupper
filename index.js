@@ -9,7 +9,7 @@ const path = require('path');
 
 const app = express();
 const maxChapter = process.env.MAX_CHAPTER || 3;
-const waitTimeout = process.env.WAIT_TIME || 5000;
+const waitTimeout = process.env.WAIT_TIME || 3000;
 
 app.use(express.static(path.join(__dirname, 'static')));
 
@@ -293,20 +293,14 @@ app.get('/image', async (req, res) => {
     res.send(Buffer.from("<img src='screenshot.jpg' style='width: 100%; height: auto;'/>"));
 });
 
-app.get('/yuri', async (req, res) => {
+app.get('/link', async (req, res) => {
     let argparam = [];
     argparam.push('--no-sandbox');
-    let proxyval = '';
+    let proxytxt = "";
     if (req.query.proxy && req.query.proxy.length > 5)
     {
-        proxyval = req.query.proxy;
+        proxytxt = req.query.proxy;
         argparam.push('--proxy-server=' + req.query.proxy);
-    }
-
-    let chapter = 0;
-    if (req.query.chap && parseInt(req.query.chap) > 0)
-    {
-        chapter = parseInt(req.query.chap);
     }
 
     const url = "https://yurineko.net/manga/" + req.query.id;
@@ -316,57 +310,37 @@ app.get('/yuri', async (req, res) => {
         args: argparam
     });
     const page = await browser.newPage();
-    await page.setViewport({width: 1440, height: 720});
 	await page.goto(url, {
         waitUntil: 'load'
     });
 
-    await page.waitForTimeout(parseInt(waitTimeout));
-
+    let waittime = parseInt(waitTimeout);
+    if (req.query.wait && parseInt(req.query.wait) > 0)
+    {
+        waittime = parseInt(req.query.wait);
+    }
+    
+    await page.waitForTimeout(waittime);
+    
     const viewer = await page.$$eval('a.link-chapter', anchors => [].map.call(anchors, a => a.href));
+    await browser.close();
 
     if (!viewer || viewer.length < 1)
     {
         res.send("Can not get because of geo restriction");
     }
-    else if (chapter < 0 || chapter > viewer.length - 1)
-    {
-        res.set('Content-Type', 'text/html');
-        res.send("<h1>Chapter incorrect</h1><br><br><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=0'><h1>Click here to read from begin</h1></a>")
-    }
     else
     {
-        await page.goto(viewer[chapter], {
-            waitUntil: 'load'
-        });
-
-        await page.waitForTimeout(parseInt(waitTimeout));
-
-        await page.screenshot({
-            path: 'static/screenshot.jpg',
-            fullPage: true
-        });
-
-        await browser.close();
-
-        if (chapter == 0)
+        let resAll = "";
+        for (let i = 0; i < viewer.length; i++)
         {
-            res.set('Content-Type', 'text/html');
-            res.send(Buffer.from("<html><head><title>Chap " + chapter + "</title></head><body><div><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=1'><button style='width: 100%;height: 80px;margin-bottom: 20px;'>Next</button></a><img src='screenshot.jpg' style='width: 100%; height: auto;'><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=1'><button style='width: 100%;height: 80px;margin-top: 20px;'>Next</button></a></div></body></html>"));
+            const tenchap = i + 1;
+            let params = "url=" + viewer[i] + "&proxy=" + proxytxt + "&wait=" + waittime;
+            resAll = resAll + "<a href='image?" + params + "' target='_blank'>Chap " + tenchap + "</a><br>";
         }
-        else if (chapter == viewer.length - 1)
-        {
-            const newchap = viewer.length - 2;
-            res.set('Content-Type', 'text/html');
-            res.send(Buffer.from("<html><head><title>Chap " + chapter + "</title></head><body><div><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=" + newchap + "'><button style='width: 100%;height: 80px;margin-bottom: 20px;'>Prev</button></a><img src='screenshot.jpg' style='width: 100%; height: auto;'><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=" + newchap + "'><button style='width: 100%;height: 80px;margin-top: 20px;'>Prev</button></a></div></body></html>"));
-        }
-        else
-        {
-            const nextchap = chapter + 1;;
-            const prevchap = chapter - 1;
-            res.set('Content-Type', 'text/html');
-            res.send(Buffer.from("<html><head><title>Chap " + chapter + "</title></head><body><div><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=" + prevchap + "'><button style='width: 49%;height: 80px;margin-right: 1%;margin-bottom: 20px;'>Prev</button></a><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=" + nextchap + "'><button style='width: 49%;height: 80px;margin-right: 1%;margin-bottom: 20px;'>Next</button></a><img src='screenshot.jpg' style='width: 100%; height: auto;'><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=" + prevchap + "'><button style='width: 49%;height: 80px;margin-right: 1%;margin-top: 20px;'>Prev</button></a><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=" + nextchap + "'><button style='width: 49%;height: 80px;margin-right: 1%;margin-top: 20px;'>Next</button></a></div></body></html>"));
-        }
+
+        res.set('Content-Type', 'text/html');
+        res.send(Buffer.from(resAll));
     }
 });
 
