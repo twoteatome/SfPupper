@@ -275,7 +275,12 @@ app.get('/image', async (req, res) => {
         waitUntil: 'load'
     });
 
-    if (req.query.wait && parseInt(req.query.wait) > 0)
+    if (url.includes("yurineko.net/read/"))
+    {
+        console.log("Yurineko read");
+        await page.waitForSelector('#comment');
+    }
+    else if (req.query.wait && parseInt(req.query.wait) > 0)
     {
         await page.waitForTimeout(parseInt(req.query.wait));
     }
