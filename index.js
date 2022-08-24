@@ -9,7 +9,6 @@ const path = require('path');
 
 const app = express();
 const maxChapter = process.env.MAX_CHAPTER || 3;
-const waitTimeout = process.env.WAIT_TIME || 5000;
 
 app.use(express.static(path.join(__dirname, 'static')));
 
@@ -26,7 +25,7 @@ const getRandomStr = function (length) {
 }
 
 app.get('/', (req, res) => {
-    res.send('OK 2: ' + maxChapter + ', ' + processLst.size + ', ' + waitTimeout);
+    res.send('OK 5: ' + maxChapter + ', ' + processLst.size);
 });
 
 app.get('/view', async (req, res) => {
@@ -55,7 +54,7 @@ app.get('/view', async (req, res) => {
     });
     const page = await browser.newPage();
     await page.goto(sfacgurl, {
-        waitUntil: 'networkidle2'
+        waitUntil: ['load', 'networkidle0']
     });
     const viewer = await page.$$eval('.story-catalog > .catalog-list > ul > li > a', anchors => [].map.call(anchors, a => a.href + ';*;' + a.innerText));
 
@@ -74,7 +73,7 @@ app.get('/view', async (req, res) => {
         else
         {
             await page.goto(tmpurl, {
-                waitUntil: 'load'
+                waitUntil: ['load', 'networkidle0']
             });
             await page.evaluate(() => {
                 const element = document.getElementsByClassName("footer")[0];
@@ -169,7 +168,7 @@ app.get('/viewasync', (req, res) => {
         });
         const page = await browser.newPage();
         await page.goto(sfacgurl, {
-            waitUntil: 'networkidle2'
+            waitUntil: ['load', 'networkidle0']
         });
         const viewer = await page.$$eval('.story-catalog > .catalog-list > ul > li > a', anchors => [].map.call(anchors, a => a.href + ';*;' + a.innerText));
 
@@ -189,7 +188,7 @@ app.get('/viewasync', (req, res) => {
             else
             {
                 await page.goto(tmpurl, {
-                    waitUntil: 'load'
+                    waitUntil: ['load', 'networkidle0']
                 });
                 await page.evaluate(() => {
                     const element = document.getElementsByClassName("footer")[0];
@@ -272,10 +271,14 @@ app.get('/image', async (req, res) => {
     const page = await browser.newPage();
     await page.setViewport({width: 1440, height: 720});
     await page.goto(url, {
-        waitUntil: 'load'
+        waitUntil: ['load', 'networkidle0']
     });
 
-    await page.waitForTimeout(parseInt(waitTimeout));
+    if (req.query.wait && parseInt(req.query.wait) > 0)
+    {
+        await page.waitForTimeout(parseInt(req.query.wait));
+    }
+    
     await page.screenshot({
         path: 'static/screenshot.jpg',
         fullPage: true
@@ -310,9 +313,10 @@ app.get('/yuri', async (req, res) => {
     const page = await browser.newPage();
     await page.setViewport({width: 1440, height: 720});
 	await page.goto(url, {
-        waitUntil: 'networkidle2'
+        waitUntil: ['load', 'networkidle0']
     });
 
+    await page.waitForSelector('a.link-chapter');
     const viewer = await page.$$eval('a.link-chapter', anchors => [].map.call(anchors, a => a.href));
 
     if (!viewer || viewer.length < 1)
@@ -327,8 +331,13 @@ app.get('/yuri', async (req, res) => {
     else
     {
         await page.goto(viewer[chapter], {
-            waitUntil: 'load'
+            waitUntil: ['load', 'networkidle0']
         });
+
+        if (req.query.wait && parseInt(req.query.wait) > 0)
+        {
+            await page.waitForTimeout(parseInt(req.query.wait));
+        }
 
         await page.screenshot({
             path: 'static/screenshot.jpg',
