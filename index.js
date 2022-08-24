@@ -270,10 +270,11 @@ app.get('/image', async (req, res) => {
     });
     const page = await browser.newPage();
     await page.setViewport({width: 1440, height: 720});
-	await page.goto(url, {
+    await page.goto(url, {
         waitUntil: 'load'
     });
 
+    await page.waitForTimeout(15000);
     await page.screenshot({
         path: 'static/screenshot.jpg',
         fullPage: true
