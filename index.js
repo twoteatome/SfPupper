@@ -307,7 +307,11 @@ app.get('/yuri', async (req, res) => {
 
     const viewer = await page.$$eval('a.link-chapter', anchors => [].map.call(anchors, a => a.href));
 
-    if (chapter < 0 || chapter > viewer.length - 1)
+    if (!viewer || viewer.length < 1)
+    {
+        res.send("Can not get because of geo restriction");
+    }
+    else if (chapter < 0 || chapter > viewer.length - 1)
     {
         res.set('Content-Type', 'text/html');
         res.send("<h1>Chapter incorrect</h1><br><br><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=0'><h1>Click here to read from begin</h1></a>")
