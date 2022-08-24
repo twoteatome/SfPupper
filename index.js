@@ -1,8 +1,11 @@
 const puppeteer = require('puppeteer');
 const express = require('express');
+const path = require('path');
 
 const app = express();
 const maxChapter = process.env.MAX_CHAPTER || 3;
+
+app.use(express.static(path.join(__dirname, 'static')));
 
 var processLst = new Map();
 
@@ -21,6 +24,12 @@ app.get('/', (req, res) => {
 });
 
 app.get('/view', async (req, res) => {
+    let argparam = [];
+    argparam.push('--no-sandbox');
+    if (req.query.proxy && req.query.proxy.length > 5)
+    {
+        argparam.push('--proxy-server=' + req.query.proxy);
+    }
     let maxch = maxChapter;
     let minch = 0;
     if (req.query.max && parseInt(req.query.max) > 0)
@@ -36,7 +45,7 @@ app.get('/view', async (req, res) => {
     const sfacgurl = 'https://book.sfacg.com/Novel/' + req.query.id + '/MainIndex/';
     const browser = await puppeteer.launch({
         headless: true,
-        args: ['--no-sandbox', '--proxy-server=socks5://127.0.0.1:9050']
+        args: argparam
     });
     const page = await browser.newPage();
     await page.goto(sfacgurl, {
@@ -125,6 +134,12 @@ app.get('/check', (req, res) => {
 });
 
 app.get('/viewasync', (req, res) => {
+    let argparam = [];
+    argparam.push('--no-sandbox');
+    if (req.query.proxy && req.query.proxy.length > 5)
+    {
+        argparam.push('--proxy-server=' + req.query.proxy);
+    }
     let maxch = maxChapter;
     let minch = 0;
     const currentid = getRandomStr(5) + Date.now().toString();
@@ -144,7 +159,7 @@ app.get('/viewasync', (req, res) => {
     new Promise(async () => {
         const browser = await puppeteer.launch({
             headless: true,
-            args: ['--no-sandbox', '--proxy-server=socks5://127.0.0.1:9050']
+            args: argparam
         });
         const page = await browser.newPage();
         await page.goto(sfacgurl, {
@@ -189,9 +204,15 @@ app.get('/viewasync', (req, res) => {
 });
 
 app.get('/checktor', async (req, res) => {
+    let argparam = [];
+    argparam.push('--no-sandbox');
+    if (req.query.proxy && req.query.proxy.length > 5)
+    {
+        argparam.push('--proxy-server=' + req.query.proxy);
+    }
     const browser = await puppeteer.launch({
         headless: true,
-        args: ['--no-sandbox', '--proxy-server=socks5://127.0.0.1:9050']
+        args: argparam
     });
     const page = await browser.newPage();
 	await page.goto('https://check.torproject.org/');
@@ -210,9 +231,15 @@ app.get('/checktor', async (req, res) => {
 });
 
 app.get('/checkip', async (req, res) => {
+    let argparam = [];
+    argparam.push('--no-sandbox');
+    if (req.query.proxy && req.query.proxy.length > 5)
+    {
+        argparam.push('--proxy-server=' + req.query.proxy);
+    }
     const browser = await puppeteer.launch({
         headless: true,
-        args: ['--no-sandbox', '--proxy-server=socks5://127.0.0.1:9050']
+        args: argparam
     });
     const page = await browser.newPage();
 	await page.goto('https://www.whatismyip.com/');
@@ -221,6 +248,102 @@ app.get('/checkip', async (req, res) => {
     viewer = viewer.replace(/\n/g, "<br>");
     res.set('Content-Type', 'text/html');
     res.send(Buffer.from(viewer));
+});
+
+app.get('/image', async (req, res) => {
+    let argparam = [];
+    argparam.push('--no-sandbox');
+    if (req.query.proxy && req.query.proxy.length > 5)
+    {
+        argparam.push('--proxy-server=' + req.query.proxy);
+    }
+    const url = req.query.url;
+    const browser = await puppeteer.launch({
+        headless: true,
+        timeout: 100000,
+        args: argparam
+    });
+    const page = await browser.newPage();
+    await page.setViewport({width: 1440, height: 720});
+	await page.goto(url, {
+        waitUntil: 'load'
+    });
+    await page.screenshot({
+        path: 'static/screenshot.jpg',
+        fullPage: true
+    });
+    await browser.close();
+    res.set('Content-Type', 'text/html');
+    res.send(Buffer.from("<img src='screenshot.jpg' style='width: 100%; height: auto;'/>"));
+});
+
+app.get('/yuri', async (req, res) => {
+    let argparam = [];
+    argparam.push('--no-sandbox');
+    let proxyval = '';
+    if (req.query.proxy && req.query.proxy.length > 5)
+    {
+        proxyval = req.query.proxy;
+        argparam.push('--proxy-server=' + req.query.proxy);
+    }
+
+    let chapter = 0;
+    if (req.query.chap && parseInt(req.query.chap) > 0)
+    {
+        chapter = parseInt(req.query.chap);
+    }
+
+    const url = "https://yurineko.net/manga/" + req.query.id;
+    const browser = await puppeteer.launch({
+        headless: true,
+        timeout: 100000,
+        args: argparam
+    });
+    const page = await browser.newPage();
+    await page.setViewport({width: 1440, height: 720});
+	await page.goto(url, {
+        waitUntil: 'networkidle2'
+    });
+
+    const viewer = await page.$$eval('a.link-chapter', anchors => [].map.call(anchors, a => a.href));
+
+    if (chapter < 0 || chapter > viewer.length - 1)
+    {
+        res.set('Content-Type', 'text/html');
+        res.send("<h1>Chapter incorrect</h1><br><br><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=0'><h1>Click here to read from begin</h1></a>")
+    }
+    else
+    {
+        await page.goto(viewer[chapter], {
+            waitUntil: 'load'
+        });
+
+        await page.screenshot({
+            path: 'static/screenshot.jpg',
+            fullPage: true
+        });
+
+        await browser.close();
+
+        if (chapter == 0)
+        {
+            res.set('Content-Type', 'text/html');
+            res.send(Buffer.from("<html><head><title>Chap " + chapter + "</title></head><body><div><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=1'><button style='width: 100%;height: 80px;margin-bottom: 20px;'>Next</button></a><img src='screenshot.jpg' style='width: 100%; height: auto;'><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=1'><button style='width: 100%;height: 80px;margin-top: 20px;'>Next</button></a></div></body></html>"));
+        }
+        else if (chapter == viewer.length - 1)
+        {
+            const newchap = viewer.length - 2;
+            res.set('Content-Type', 'text/html');
+            res.send(Buffer.from("<html><head><title>Chap " + chapter + "</title></head><body><div><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=" + newchap + "'><button style='width: 100%;height: 80px;margin-bottom: 20px;'>Prev</button></a><img src='screenshot.jpg' style='width: 100%; height: auto;'><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=" + newchap + "'><button style='width: 100%;height: 80px;margin-top: 20px;'>Prev</button></a></div></body></html>"));
+        }
+        else
+        {
+            const nextchap = chapter + 1;;
+            const prevchap = chapter - 1;
+            res.set('Content-Type', 'text/html');
+            res.send(Buffer.from("<html><head><title>Chap " + chapter + "</title></head><body><div><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=" + prevchap + "'><button style='width: 49%;height: 80px;margin-right: 1%;margin-bottom: 20px;'>Prev</button></a><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=" + nextchap + "'><button style='width: 49%;height: 80px;margin-right: 1%;margin-bottom: 20px;'>Next</button></a><img src='screenshot.jpg' style='width: 100%; height: auto;'><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=" + prevchap + "'><button style='width: 49%;height: 80px;margin-right: 1%;margin-top: 20px;'>Prev</button></a><a href='yuri?id=" + req.query.id + "&proxy=" + proxyval + "&chap=" + nextchap + "'><button style='width: 49%;height: 80px;margin-right: 1%;margin-top: 20px;'>Next</button></a></div></body></html>"));
+        }
+    }
 });
 
 const PORT = process.env.PORT || 3000;
