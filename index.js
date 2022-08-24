@@ -9,6 +9,7 @@ const path = require('path');
 
 const app = express();
 const maxChapter = process.env.MAX_CHAPTER || 3;
+const waitTimeout = process.env.WAIT_TIME || 5000;
 
 app.use(express.static(path.join(__dirname, 'static')));
 
@@ -274,7 +275,7 @@ app.get('/image', async (req, res) => {
         waitUntil: 'load'
     });
 
-    await page.waitForTimeout(15000);
+    await page.waitForTimeout(parseInt(waitTimeout));
     await page.screenshot({
         path: 'static/screenshot.jpg',
         fullPage: true
