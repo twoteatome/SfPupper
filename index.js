@@ -334,7 +334,7 @@ app.get('/link', async (req, res) => {
         let resAll = "";
         for (let i = 0; i < viewer.length; i++)
         {
-            const tenchap = i + 1;
+            const tenchap = viewer.length - i;
             let params = "url=" + viewer[i] + "&proxy=" + proxytxt + "&wait=" + waittime;
             resAll = resAll + "<a href='image?" + params + "' target='_blank'>Chap " + tenchap + "</a><br>";
         }
